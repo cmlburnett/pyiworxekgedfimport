@@ -8,6 +8,10 @@ import sys
 import wiff
 
 class EDFReader:
+	"""
+	EDF file fromat reader.
+	EDF contains a header segment and data segments.
+	"""
 	def __init__(self, f):
 		version = f.read(8).strip()
 		patient = f.read(80).strip()
@@ -39,31 +43,33 @@ class EDFReader:
 			self._signals.append({
 				'Label': label,
 			})
-		for i in range(self.NumSignals):
+		# All of the following depend on the number of signals
+		r = range(self.NumSignals)
+		for i in r:
 			transducer = f.read(80).decode('ascii').strip()
 			self._signals[i]['Transducer'] = transducer
-		for i in range(self.NumSignals):
+		for i in r:
 			physical = f.read(8).decode('ascii').strip()
 			self._signals[i]['PhysicalDimension'] = physical
-		for i in range(self.NumSignals):
+		for i in r:
 			physical = float(f.read(8).decode('ascii').strip())
 			self._signals[i]['PhysicalMinimum'] = physical
-		for i in range(self.NumSignals):
+		for i in r:
 			physical = float(f.read(8).decode('ascii').strip())
 			self._signals[i]['PhysicalMaximum'] = physical
-		for i in range(self.NumSignals):
+		for i in r:
 			digital = int(f.read(8).decode('ascii').strip())
 			self._signals[i]['DigitalMinimum'] = digital
-		for i in range(self.NumSignals):
+		for i in r:
 			digital = int(f.read(8).decode('ascii').strip())
 			self._signals[i]['DigitalMaximum'] = digital
-		for i in range(self.NumSignals):
+		for i in r:
 			filtering = f.read(80).decode('ascii').strip()
 			self._signals[i]['Filtering'] = filtering
-		for i in range(self.NumSignals):
+		for i in r:
 			num_samples = int(f.read(8).decode('ascii').strip())
 			self._signals[i]['NumSamples'] = num_samples
-		for i in range(self.NumSignals):
+		for i in r:
 			resv = f.read(32).decode('ascii').strip()
 			self._signals[i]['Reserved'] = resv
 
@@ -243,7 +249,11 @@ def main():
 				'name': ch['Label'],
 				'bits': 16,
 				'unit': ch['PhysicalDimension'],
-				'comment': 'Physical (%d,%d) to (%d,%d)' % (ch['PhysicalMinimum'],ch['PhysicalMaximum'], ch['DigitalMinimum'],ch['DigitalMaximum']),
+				'digitalminvalue': ch['DigitalMinimum'],
+				'digitalmaxvalue': ch['DigitalMaximum'],
+				'analogminvalue': ch['PhysicalMinimum'],
+				'analogmaxvalue': ch['PhysicalMaximum'],
+				'comment': '',
 			})
 
 		f.writeWIFF(wiff_fname, props)
