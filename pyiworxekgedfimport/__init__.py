@@ -21,13 +21,19 @@ class EDFReader:
 		numbytes = int(f.read(8).decode('ascii').strip())
 		resv = f.read(44)
 		num_records = int(f.read(8).decode('ascii').strip())
+		# Duration of each record
 		duration = int(f.read(8).decode('ascii').strip())
 		ns = int(f.read(4).decode('ascii').strip())
 
 		self._num_records = num_records
 		self._num_signals = ns
-		self._duration = duration
+
+		# Duration in seconds of each data record times the number of records
+		self._duration = duration * num_records
+
+		# Start of recording provided and end inferred from duration
 		self._start = datetime.datetime.strptime(startdate + starttime, '%d.%m.%y%H.%M.%S')
+		self._end = self._start + datetime.timedelta(seconds=self._duration)
 
 		if resv.startswith("EDF+C".encode('ascii')):
 			self._format = "EDF+C"
@@ -43,6 +49,7 @@ class EDFReader:
 			self._signals.append({
 				'Label': label,
 			})
+
 		# All of the following depend on the number of signals
 		r = range(self.NumSignals)
 		for i in r:
@@ -131,6 +138,9 @@ class EDFReader:
 
 	@staticmethod
 	def parseTALs(dat):
+		"""
+		Parse a time-stamped annotation list (TAL).
+		"""
 		ret = []
 		#print(dat)
 
@@ -186,6 +196,9 @@ class EDFReader:
 	@property
 	def Start(self): return self._start
 
+	@property
+	def End(self): return self._end
+
 	@contextlib.contextmanager
 	def open(fname):
 		with open(fname, 'rb') as f:
@@ -193,6 +206,10 @@ class EDFReader:
 			yield o
 
 	def writeWIFF(self, fname, props):
+		"""
+		Export EDF data into a WIFF file.
+		"""
+
 		with wiff.new(fname, props) as w:
 			id_channelset = w.add_channelset(w.channel)
 
@@ -235,7 +252,7 @@ def main():
 	with EDFReader.open(fname) as f:
 		props = {
 			'start': f.Start,
-			'end': f.Start + datetime.timedelta(seconds=f.Duration),
+			'end': f.End,
 			'description': 'iWorx LabScribe EDF file',
 			'fs': 2000, # FIXME
 			'channels': [],
