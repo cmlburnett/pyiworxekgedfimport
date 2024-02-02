@@ -13,17 +13,21 @@ class EDFReader:
 	EDF contains a header segment and data segments.
 	"""
 	def __init__(self, f):
-		version = f.read(8).strip()
-		patient = f.read(80).strip()
-		recordinginfo = f.read(80).strip()
-		startdate = f.read(8).decode('ascii').strip()
-		starttime = f.read(8).decode('ascii').strip()
-		numbytes = int(f.read(8).decode('ascii').strip())
-		resv = f.read(44)
-		num_records = int(f.read(8).decode('ascii').strip())
-		# Duration of each record
-		duration = int(f.read(8).decode('ascii').strip())
-		ns = int(f.read(4).decode('ascii').strip())
+		try:
+			version = f.read(8).strip()
+			patient = f.read(80).strip()
+			recordinginfo = f.read(80).strip()
+			startdate = f.read(8).decode('ascii').strip()
+			starttime = f.read(8).decode('ascii').strip()
+			numbytes = int(f.read(8).decode('ascii').strip())
+			resv = f.read(44)
+			num_records = int(f.read(8).decode('ascii').strip())
+			# Duration of each record
+			duration = int(f.read(8).decode('ascii').strip())
+			ns = int(f.read(4).decode('ascii').strip())
+		except Exception as e:
+			print("Failed to parse EDF file '%s': %s" % (f.name, str(e)))
+			raise
 
 		self._num_records = num_records
 		self._num_signals = ns
